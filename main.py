@@ -14,14 +14,9 @@ def log_in(pos, login):
     elif pos == 'Пользователь':
         if visitor.menu(login) is None:
             main_menu()
-
-
-#             elif position == 'Библиотекарь':
-#                  librarian.menu()
-#              elif position == 'Посетитель':
-#                 visitor.menu()
-#              elif position == 'Архивист':
-#                  archivist.menu()
+    elif pos == 'Архивист':
+        if archivist.menu(login) is None:
+            main_menu()
 
 
 def main_menu():
@@ -38,13 +33,13 @@ def main_menu():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Log in':
-            visitor.menu('EkaterinaPopova')
+            archivist.menu('PetrSalnov')
             position = entry(values['login'], values['password'])
             if not position:
                 window['out'].update('Invalid login or password')
             else:
                 window.close()
-                log_in(position, values['login'])
+                log_in(position, values['PetrSalnov'])
 
     window.close()
 

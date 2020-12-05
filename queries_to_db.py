@@ -177,3 +177,80 @@ def submit_request(login, name, author):
     return False
 
 
+def select_docs_in_archive(name, author):
+    if name and author:
+        str = f"title='{name}' AND author='{author}'"
+    elif name:
+        str = f"title='{name}'"
+    elif author:
+        str = f"author='{author}'"
+    else:
+        return False
+
+    cursor.execute(f"SELECT archive_document_id, title, author, status_name FROM Archive "
+                   f"JOIN Status ON Status.status_id=Archive.status_id "
+                   f"WHERE {str}")
+    docs = cursor.fetchall()
+    print(docs)
+    return docs
+
+
+def get_statuses():
+    cursor.execute(f"SELECT status_id, status_name FROM Status")
+    return cursor.fetchall()
+
+
+def id_from_login_worker(login):
+    cursor.execute(f"SELECT worker_id FROM Worker JOIN Account ON Worker.account_id=Account.account_id "
+                   f"WHERE login='{login}'")
+    return cursor.fetchone()[0]
+
+
+def add_doc_to_archive(name, author, status, login):
+    worker_id = id_from_login_worker(login)
+    if name and author and status:
+        cursor.execute(f"INSERT Archive(title, author, status_id, worker_id) "
+                       f"VALUES('{name}', '{author}', {status}, {worker_id})")
+        cursor.commit()
+        cursor.execute(f"SELECT archive_document_id FROM Archive WHERE title='{name}' AND author='{author}'")
+        return cursor.fetchone()
+    return False
+
+
+def list_of_archive_documents():
+    cursor.execute(f"SELECT archive_document_id, title, author, status_name FROM Archive "
+                   f"JOIN Status ON Status.status_id=Archive.status_id")
+    documents = cursor.fetchall()
+    docs = []
+    for doc in documents:
+        docs.append(f"{doc[0]}. {doc[1]} - {doc[2]} ({doc[3]})")
+    docs.sort()
+    return docs
+
+
+def delete_document_from_archive(archive_doc_id):
+    cursor.execute(f"DELETE FROM Archive WHERE archive_document_id={archive_doc_id}")
+    cursor.commit()
+    cursor.execute(f"SELECT archive_document_id FROM Archive WHERE archive_document_id={archive_doc_id}")
+    return cursor.fetchall()
+
+
+def copy_doc_in_archive(archive_document_id, login):
+    if archive_document_id:
+        cursor.execute(f"SELECT distinct title, author FROM Archive WHERE archive_document_id={archive_document_id}")
+        arc = cursor.fetchall()[0]
+        worker_id = id_from_login_worker(login)
+        cursor.execute(f"INSERT Archive(title, author, status_id, worker_id) VALUES ('{arc[0]}', '{arc[1]}', 3, {worker_id})")
+        cursor.commit()
+        return True
+    return False
+
+
+def change_status_of_doc(document_id, to_status):
+    if document_id and to_status:
+        cursor.execute(f"UPDATE Archive SET status_id={to_status} WHERE archive_document_id={document_id}")
+        cursor.commit()
+        cursor.execute(f"SELECT status_id FROM Archive "
+                       f"WHERE archive_document_id={document_id} AND status_id={to_status}")
+        return cursor.fetchall()[0]
+    return False
