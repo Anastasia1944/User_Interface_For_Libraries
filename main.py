@@ -11,11 +11,15 @@ def log_in(pos, login):
     if pos == 'Главный библиотекарь':
         if chief_librarian.menu() is None:
             main_menu()
-    elif pos == 'Пользователь':
+    elif pos == 'Посетитель':
+        print(pos, login)
         if visitor.menu(login) is None:
             main_menu()
     elif pos == 'Архивист':
         if archivist.menu(login) is None:
+            main_menu()
+    elif pos == 'Библиотекарь':
+        if librarian.menu() is None:
             main_menu()
 
 
@@ -33,13 +37,12 @@ def main_menu():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Log in':
-            archivist.menu('PetrSalnov')
             position = entry(values['login'], values['password'])
             if not position:
                 window['out'].update('Invalid login or password')
             else:
                 window.close()
-                log_in(position, values['PetrSalnov'])
+                log_in(position, values['login'])
 
     window.close()
 

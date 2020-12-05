@@ -102,7 +102,7 @@ def exception_from_archive(login):
             window.close()
             menu(login)
         if event == 'Delete':
-            if queries_to_db.delete_document_from_archive(values['doc'][0].split('.')[0]):
+            if not queries_to_db.delete_document_from_archive(values['doc'][0].split('.')[0]):
                 window['out'].update('Document deleted')
             else:
                 window['out'].update('Document not deleted')

@@ -1,5 +1,6 @@
 from sql_connection import Sql
 import random
+import datetime
 
 # Create connection to Database "test"
 sql = Sql('Library')
@@ -26,11 +27,11 @@ def add_doc(name, author, genre):
 
 
 def list_of_documents():
-    cursor.execute(f"SELECT name, author, genre, CONVERT(NVARCHAR, date_added, 1) FROM Document")
+    cursor.execute(f"SELECT document_id, name, author, genre, CONVERT(NVARCHAR, date_added, 1) FROM Document")
     documents = cursor.fetchall()
     docs = []
     for doc in documents:
-        docs.append(f"{doc[0]} - {doc[1]} - {doc[2]} - {doc[3]}")
+        docs.append(f"{doc[0]}. {doc[1]} - {doc[2]} - {doc[3]} - {doc[4]}")
     docs.sort()
     return docs
 
@@ -254,3 +255,30 @@ def change_status_of_doc(document_id, to_status):
                        f"WHERE archive_document_id={document_id} AND status_id={to_status}")
         return cursor.fetchall()[0]
     return False
+
+
+def give_doc_to_visitor(visitor_id, document_id):
+    if visitor_id and document_id:
+        cursor.execute(f"EXEC take_doc {visitor_id}, {document_id}")
+        cursor.commit()
+        cursor.execute(f"SELECT log_id FROM Event_log "
+                       f"WHERE visitor_id={visitor_id} AND document_id={document_id} "
+                       f"AND CAST(date_give as date)=CAST(GETDATE() as date)")
+        return cursor.fetchall()
+    return False
+
+
+def return_doc_from_visitor(visitor_id, document_id):
+    if visitor_id and document_id:
+        cursor.execute(f"EXEC return_doc {visitor_id}, {document_id}")
+        cursor.commit()
+        cursor.execute(f"SELECT log_id FROM Event_log "
+                       f"WHERE visitor_id={visitor_id} AND document_id={document_id} "
+                       f"AND CAST(date_return as date)=CAST(GETDATE() as date)")
+        return cursor.fetchall()
+    return False
+
+
+def expired_documents():
+    cursor.execute(f"EXEC overdue_docs")
+    return cursor.fetchall()
