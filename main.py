@@ -1,17 +1,20 @@
 import PySimpleGUI as sg
 from queries_to_db import entry
 from Roles import chief_librarian, visitor, librarian, archivist
-#from Roles.chief_librarian import menu
+# from Roles.chief_librarian import menu
 import queries_to_db
-
 
 sg.theme('Reddit')
 
 
-def log_in(pos):
+def log_in(pos, login):
     if pos == 'Главный библиотекарь':
         if chief_librarian.menu() is None:
             main_menu()
+    elif pos == 'Пользователь':
+        if visitor.menu(login) is None:
+            main_menu()
+
 
 #             elif position == 'Библиотекарь':
 #                  librarian.menu()
@@ -35,15 +38,15 @@ def main_menu():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Log in':
+            visitor.menu('EkaterinaPopova')
             position = entry(values['login'], values['password'])
             if not position:
                 window['out'].update('Invalid login or password')
             else:
                 window.close()
-                log_in(position)
+                log_in(position, values['login'])
 
     window.close()
 
+
 main_menu()
-
-
