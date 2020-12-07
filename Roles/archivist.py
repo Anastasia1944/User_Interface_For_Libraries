@@ -137,6 +137,8 @@ def change_status(login):
             else:
                 window['out'].update('Status not changed')
 
+    window.close()
+
 
 def menu(login):
     layout = [[sg.Button('Back'), sg.Button('Exit')],

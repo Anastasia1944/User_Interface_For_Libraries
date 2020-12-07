@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 import queries_to_db
 
+
 sg.theme('Reddit')
 
 
@@ -125,9 +126,10 @@ def add_worker():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Add':
-            if queries_to_db.add_worker(values['position'], values['name'], values['surname'],
-                                        values['login'], values['phone_number']):
-                window['out'].update('Worker added')
+            password = queries_to_db.add_worker(values['position'], values['name'], values['surname'],
+                                        values['login'], values['phone_number'])
+            if password:
+                window['out'].update('Worker added. Password: ' + password)
             else:
                 window['out'].update('Worker not added')
         if event == 'Back':
@@ -180,9 +182,10 @@ def add_visitor():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Add':
-            if queries_to_db.add_visitor(values['name'], values['surname'],
-                                         values['login'], values['phone_number'], values['passport_number']):
-                window['out'].update('Visitor added')
+            password = queries_to_db.add_visitor(values['name'], values['surname'],
+                                         values['login'], values['phone_number'], values['passport_number'])
+            if password:
+                window['out'].update('Visitor added. Password: ' + password)
             else:
                 window['out'].update('Visitor not added')
         if event == 'Back':

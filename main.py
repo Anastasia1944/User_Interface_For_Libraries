@@ -1,8 +1,6 @@
 import PySimpleGUI as sg
-from queries_to_db import entry
+from queries_to_db import entry, hash_password
 from Roles import chief_librarian, visitor, librarian, archivist
-# from Roles.chief_librarian import menu
-import queries_to_db
 
 sg.theme('Reddit')
 
@@ -37,7 +35,8 @@ def main_menu():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Log in':
-            position = entry(values['login'], values['password'])
+            hash = hash_password(values['password'])
+            position = entry(values['login'], hash)
             if not position:
                 window['out'].update('Invalid login or password')
             else:
@@ -46,5 +45,7 @@ def main_menu():
 
     window.close()
 
-
+#pas = password_generation()
+#print(pas)
+#print(hash_password(pas))
 main_menu()

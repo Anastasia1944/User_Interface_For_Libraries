@@ -22,9 +22,10 @@ def add_visitor():
         if event == sg.WIN_CLOSED or event == 'Exit':
             break
         if event == 'Add':
-            if queries_to_db.add_visitor(values['name'], values['surname'],
-                                         values['login'], values['phone_number'], values['passport_number']):
-                window['out'].update('Visitor added')
+            password = queries_to_db.add_visitor(values['name'], values['surname'],
+                                                 values['login'], values['phone_number'], values['passport_number'])
+            if password:
+                window['out'].update('Visitor added. Password: ' + password)
             else:
                 window['out'].update('Visitor not added')
         if event == 'Back':
@@ -60,6 +61,8 @@ def exclude_visitor():
             else:
                 window['out'].update('Visitor not excluded')
 
+    window.close()
+
 
 def give_document():
     visitors = queries_to_db.select_visitors()
@@ -90,6 +93,8 @@ def give_document():
             else:
                 window['out'].update('Document not provided')
 
+    window.close()
+
 
 def take_document():
     visitors = queries_to_db.select_visitors()
@@ -97,11 +102,10 @@ def take_document():
     for v in visitors:
         vis.append(f'{v[0]}. {v[1]} {v[2]} - {v[3]}')
 
-    documents = queries_to_db.list_of_documents()
-
     layout = [[sg.Text(size=(50, 1))],
-              [sg.Text('Select visitor', size=(15, 1)), sg.InputCombo(vis, size=(50, 5), key='visitor')],
-              [sg.Text('Select document:', size=(15, 1)), sg.Listbox(documents, size=(50, 20), key='doc')],
+              [sg.Text('Select visitor', size=(15, 1)), sg.InputCombo(vis, size=(50, 5), key='visitor'),
+               sg.Button('Output')],
+              [sg.Text('Select document:', size=(15, 1)), sg.Listbox('', size=(50, 20), key='doc')],
               [sg.Text(size=(50, 1), key='out')],
               [sg.Button('Return'), sg.Button('Exit'), sg.Button('Back')]]
 
@@ -115,10 +119,23 @@ def take_document():
             window.close()
             menu()
         if event == 'Return':
-            if queries_to_db.return_doc_from_visitor(values['visitor'].split('.')[0], values['doc'][0].split('.')[0]):
+            vis_id = values['visitor'].split('.')[0]
+            if values['doc'] == '':
+                window['out'].update('Choose document')
+            elif queries_to_db.return_doc_from_visitor(vis_id, values['doc'][0].split('.')[0]):
+
                 window['out'].update('Document returned')
             else:
                 window['out'].update('Document not returned')
+        if event == 'Output':
+            vis_id = values['visitor'].split('.')[0]
+            documents = queries_to_db.view_visitor_in_hand_documents(vis_id)
+            doc = []
+            for d in documents:
+                doc.append(f"{d[0]}. {d[1]} - {d[2]}")
+            window['doc'].update(doc)
+
+    window.close()
 
 
 def expired_documents():
@@ -149,6 +166,8 @@ def expired_documents():
         if event == 'Back':
             window.close()
             menu()
+
+    window.close()
 
 
 def menu():

@@ -1,18 +1,27 @@
 from sql_connection import Sql
 import random
 import datetime
+import hashlib
 
 # Create connection to Database "test"
 sql = Sql('Library')
 cursor = sql.cnxn.cursor()
 
 
+def hash_password(password):
+    hash_pass = hashlib.md5(password.encode())
+    return hash_pass.hexdigest()
+
+
 def entry(log, pas):
     if log and pas:
         cursor.execute(f"EXEC Account_Position '{log}', '{pas}'")
-        position = cursor.fetchall()[0][0]
-        return position
-    return []
+        position = cursor.fetchall()
+        if position:
+            return position[0][0]
+        else:
+            return False
+    return False
 
 
 def add_doc(name, author, genre):
@@ -27,7 +36,8 @@ def add_doc(name, author, genre):
 
 
 def list_of_documents():
-    cursor.execute(f"SELECT document_id, name, author, genre, CONVERT(NVARCHAR, date_added, 1) FROM Document")
+    cursor.execute(f"SELECT document_id, name, author, genre, CONVERT(NVARCHAR, date_added, 1) "
+                   f"FROM Document")
     documents = cursor.fetchall()
     docs = []
     for doc in documents:
@@ -38,12 +48,13 @@ def list_of_documents():
 
 def delete_document(document):
     document = document.split(' - ')
-    cursor.execute(f"DELETE FROM Document WHERE name='{document[0]}' AND author='{document[1]}' "
+    name = document[0].split('. ')[1]
+    cursor.execute(f"DELETE FROM Document WHERE name='{name}' AND author='{document[1]}' "
                    f"AND genre='{document[2]}'")
     cursor.commit()
-    cursor.execute(f"SELECT document_id FROM Document WHERE name='{document[0]}' AND author='{document[1]}' "
+    cursor.execute(f"SELECT document_id FROM Document WHERE name='{name}' AND author='{document[1]}' "
                    f"AND genre='{document[2]}'")
-    if not cursor.fetchall()[0][0]:
+    if not cursor.fetchall():
         return True
     else:
         return False
@@ -78,21 +89,30 @@ def select_positions():
 
 def add_account(login):
     password = password_generation()
-    cursor.execute(f"INSERT Account(login, password) VALUES ('{login}', '{password}')")
+    password_hash = hash_password(password)
+    cursor.execute(f"INSERT Account(login, password) VALUES ('{login}', '{password_hash}')")
     cursor.commit()
-    cursor.execute(f"SELECT account_id FROM Account WHERE login='{login}' AND password='{password}'")
-    account_id = cursor.fetchone()[0]
-    return account_id
+    cursor.execute(f"SELECT account_id FROM Account WHERE login='{login}' AND password='{password_hash}'")
+    account_id = cursor.fetchone()
+    if account_id:
+        return password, account_id[0]
+    else:
+        return False
 
 
 def add_worker(position, name, surname, login, phone_number):
     if name and position and surname and login and phone_number:
-        account_id = add_account(login)
+        password, account_id = add_account(login)
+        if not account_id:
+            return False
         cursor.execute(f"INSERT Worker(position_id, name, surname, phone_number, account_id) "
                        f"VALUES ({int(position[0])}, '{name}', '{surname}', '{phone_number}', '{account_id}')")
         cursor.commit()
         cursor.execute(f"SELECT worker_id FROM Worker WHERE name='{name}' AND phone_number='{phone_number}'")
-        return cursor.fetchone()
+        if cursor.fetchone():
+            return password
+        else:
+            return False
     return False
 
 
@@ -115,12 +135,15 @@ def delete_worker(worker_id):
 
 def add_visitor(name, surname, login, phone_number, passport_number):
     if name and passport_number and surname and login and phone_number:
-        account_id = add_account(login)
+        password, account_id = add_account(login)
         cursor.execute(f"INSERT Visitor(name, surname, phone_number, passport_number, account_id) "
                        f"VALUES ('{name}', '{surname}', '{phone_number}', '{passport_number}', '{account_id}')")
         cursor.commit()
         cursor.execute(f"SELECT visitor_id FROM Visitor WHERE name='{name}' AND phone_number='{phone_number}'")
-        return cursor.fetchone()
+        if cursor.fetchone():
+            return password
+        else:
+            return False
     return False
 
 
@@ -192,7 +215,6 @@ def select_docs_in_archive(name, author):
                    f"JOIN Status ON Status.status_id=Archive.status_id "
                    f"WHERE {str}")
     docs = cursor.fetchall()
-    print(docs)
     return docs
 
 
@@ -253,7 +275,7 @@ def change_status_of_doc(document_id, to_status):
         cursor.commit()
         cursor.execute(f"SELECT status_id FROM Archive "
                        f"WHERE archive_document_id={document_id} AND status_id={to_status}")
-        return cursor.fetchall()[0]
+        return cursor.fetchall()
     return False
 
 
@@ -282,3 +304,11 @@ def return_doc_from_visitor(visitor_id, document_id):
 def expired_documents():
     cursor.execute(f"EXEC overdue_docs")
     return cursor.fetchall()
+
+
+def view_visitor_in_hand_documents(visitor_id):
+    cursor.execute(f"SELECT Event_log.document_id, name, CONVERT(NVARCHAR, date_give, 1) "
+                   f"FROM Event_log JOIN Document ON Event_log.document_id=Document.document_id "
+                   f"WHERE visitor_id={int(visitor_id)} AND date_return is NULL")
+    return cursor.fetchall()
+

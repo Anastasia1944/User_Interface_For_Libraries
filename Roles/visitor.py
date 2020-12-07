@@ -52,6 +52,7 @@ def view_documents(login):
         if event == 'Back':
             window.close()
             menu(login)
+    window.close()
 
 
 def app_for_document(login):
@@ -74,6 +75,8 @@ def app_for_document(login):
                 window['out'].update('Request added')
             else:
                 window['out'].update('Request not added')
+
+    window.close()
 
 
 def menu(login):
